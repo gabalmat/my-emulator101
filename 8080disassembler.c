@@ -2,6 +2,8 @@
  * Disassmebles a stream of 8080 hex code back into assembly language source. 
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 
 /*
  * codebuffer is a valid pointer to 8080 assembly code
@@ -383,5 +385,41 @@ int dissasemble_8080( unsigned char *codebuffer, int pc)
         case 0xff: printf("RST 7"); break;
     }
 
+    return opbytes;
+}
+
+int main (int argc, char** argv)
+{
+    if (argc < 2) {
+        printf("error: Please provide a filename argument\n");
+        exit(1);
+    }
+
+    FILE *fptr = fopen(argv[1], "rb");
+    if (fptr == NULL) {
+        printf("error: Couldn't open %s\n", argv[1]);
+        exit(1);
+    }
+
+    // Get the filesize and read it into a memory buffer
+    fseek(fptr, 0L, SEEK_END);
+    int fsize = ftell(fptr);
+    fseek(fptr, 0L, SEEK_SET);
+
+    unsigned char *buffer = (unsigned char *) malloc(fsize);
+    if (buffer == NULL) {
+        printf("Unable to allocate memory buffer.\n");
+    }
+
+    fread(buffer, fsize, 1, fptr);
+    fclose(fptr);
+
+    int pc = 0;
+
+    while (pc < fsize) {
+        pc += disassemble_8080(buffer, pc);
+    }
+
+    return 0;
 }
 
